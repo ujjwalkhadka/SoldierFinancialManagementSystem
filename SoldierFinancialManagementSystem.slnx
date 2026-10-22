@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="Soldier Financial Management System.csproj" />
+  <Project Path="Tests/SoldierFinance.Tests.csproj" />
 </Solution>

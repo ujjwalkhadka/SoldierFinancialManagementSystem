@@ -80,7 +80,9 @@ public class Soldier
     { 
         get
         {
-            return NetPay / 2;
+            // Round to the cent so deposits never contain half-cents;
+            // EndMonthPay gets any remaining cent.
+            return PayRates2026.Round(NetPay / 2);
         }
             
     }

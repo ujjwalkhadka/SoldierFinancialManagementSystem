@@ -1,76 +1,70 @@
-# Soldier Finance - four tabs matching the reference pictures
+# Soldier Financial Management System
 
-Open SoldierFinanceSample.csproj in Visual Studio on Windows with the .NET desktop development workload/.NET 8 SDK. Extract this update into a new folder. Visual Studio restores DocumentFormat.OpenXml 3.5.1 on first build.
+A Windows desktop application that calculates and manages U.S. Army enlisted soldiers' monthly pay: entitlements, deductions, net pay, and mid-month / end-of-month deposits. It is built with C#, .NET 8 and Windows Forms.
 
-## Four read-only tabs
-Both MainForm and the separate SoldierManagementForm have exactly four tabs: Personal Details, Entitlements, Deductions and Pay Summary. MainForm shows labels and read-only textboxes positioned to resemble your four uploaded pictures. The management form provides editable inputs for the same record.
+I built it as part of the Microsoft Software & Systems Academy (MSSA) Cloud Application Development program. It draws on my four years as an Army Financial Management Technician processing soldier payroll.
 
-Personal Details: SSN, First Name, Middle, Last Name, Rank, Dependents, Unit, Years of Service, Duty Station. Middle is optional. Dependents displays Yes/No. There is no pay period or separate pay settings tab on the viewer. First/middle/last names are separate model properties; Name combines them for the selector/search.
+## Features
 
-Entitlements: Base Salary, Basic Allowance for Housing (BAH), Basic Allowance for Subsistence (BAS), Overseas Housing Allowance (OHA), Clothing Allowance, Family Separation Allowance (FSA), Special Pay.
+- **Login and logout:** a login screen opens the application. Logging out returns to the login screen and keeps any changes made during the session.
+- **Soldier records:** add, update and delete soldiers through a separate management form.
+  - Required fields and a unique SSN are validated before a record is saved.
+  - Changes are applied only after validation and pay calculation succeed, so Cancel always leaves the original record untouched.
+  - Deleting a soldier asks for confirmation.
+- **Pay calculation**, based on pay grade, years of service, duty station and dependent status:
+  - Basic pay from the 2026 DFAS enlisted pay table (E-2 to E-8, 0–18 years of service).
+  - Basic Allowance for Housing (BAH) from cached 2026 rates for 8 duty stations, with a manual rate for other stations.
+  - Basic Allowance for Subsistence (BAS), Overseas Housing Allowance (OHA), clothing allowance, Family Separation Allowance (FSA) and special pay.
+  - Deductions: federal and state tax, Social Security (6.2%), Medicare (1.45%), life insurance (SGLI) and allotments/debt.
+  - Total entitlements, total deductions, net monthly pay, and the mid-month / end-of-month deposit split.
+- **Search:** a case-insensitive partial match on name, SSN or rank, with **Show all** to reset.
+- **Excel export:** writes every record to a 26-column `.xlsx` workbook using the Open XML SDK, so Excel doesn't need to be installed.
+  - Amounts are stored as real numbers, and SSNs as text so leading zeros are kept.
+  - The file is written to a temporary location first, so a failed save never corrupts an existing export.
+- **Sample data:** 50 fictional soldiers (SSNs 000-00-0001 to 000-00-0050) are loaded at startup.
 
-Deductions: Federal Income Tax Withheld, State Income Tax Withheld, FICA/Medicare Taxes, Servicemembers' Group Life Insurance, Allotments/Debt Collections. Social Security and Medicare are combined for display. Allotments/debt is entered as one combined amount and included once in Total Deductions.
+## Tech stack
 
-Pay Summary: Total Entitlements, Total Deductions, Monthly Salary(estimated), Mid Month Deposit, End of Month Deposit. There is no separate allotment total or extra settings display.
+| Area | Technology |
+|---|---|
+| Language | C# |
+| Framework | .NET 8 (`net8.0-windows`), Windows Forms |
+| Excel export | DocumentFormat.OpenXml 3.5.1 (NuGet) |
+| IDE | Visual Studio |
 
-TSP, meals, dental, COLA, separate savings/support inputs and the old pay period field were removed to match the pictured categories. Financial zero labels/textboxes are hidden at runtime, preserving your previous omit-zero requirement. Every control remains visible and editable in Design view. Excel stores numeric 0.
+## Project structure
 
-## Managing records and search
-Add/Update/Delete buttons open SoldierManagementForm. All list mutations and validation are in that .cs file, not MainForm.cs. Typing does not change a record. Save validates and calculates a candidate, then commits. Cancel, Escape or X discards unsaved changes. Delete requires Yes confirmation; No/Cancel keeps the record. Deleting all records is handled safely.
+| File | Purpose |
+|---|---|
+| `Program.cs` | Entry point: seeds the 50 sample soldiers and opens the login form |
+| `LoginForm.cs` | Login and logout flow |
+| `MainForm.cs` | Read-only viewer with four tabs (Personal Details, Entitlements, Deductions, Pay Summary), search and Excel export |
+| `SoldierManagementForm.cs` | Add / update / delete form with validation |
+| `Soldier.cs` | Soldier model and pay calculation |
+| `PayRates2026.cs` | 2026 basic pay table and BAS rate |
+| `BahRates2026.cs` | 2026 BAH rates by duty station, grade and dependent status |
+| `ExcelExporter.cs` | Open XML export to `.xlsx` |
 
-The management Personal Details tab also holds pay grade and government-quarters inputs required for calculation, without adding those fields to the pictured main viewer. Its Entitlements tab has the BAH rate input for manual stations. Other computed fields are not editable.
+## How to run
 
-Search matches part of a full name (including middle), demo SSN or rank, ignoring case. Click Search or press Enter. Show all restores the complete selector; no match clears the displays. A successful management change clears the current search. Excel exports all current soldiers even while searched.
+1. Install Visual Studio 2022 or later with the **.NET desktop development** workload (which includes the .NET 8 SDK).
+2. Clone the repository and open `SoldierFinancialManagementSystem.slnx`.
+3. Build and run with **F5**. NuGet restores the Open XML package on the first build.
+4. Log in with the demo account: username `Soldier`, password `Password`.
 
-## Pay assumptions and new demo totals
-- Cached 2026 basic-pay and BAH tables are retained. E-2 through E-8, 0-18 service years; E-8 requires over 8 years. Strictly-over service thresholds apply.
-- BAS is 476.95. SGLI + TSGLI assumes 26/month. Social Security is 6.2% and Medicare 1.45% of basic pay only, rounded separately. They appear together as FICA/Medicare Taxes.
-- Federal/state withholding and allotments/debt are entered. The combined allotment/debt amount is already inside Total Deductions; do not subtract it again.
-- OHA and FSA are entered authorized amounts, defaulting to zero. No overseas rent cap, currency conversion or eligibility calculation is provided. In this simplified demo, entering positive OHA sets BAH to zero to avoid adding two housing allowances. Government quarters also sets BAH to zero.
-- Total Entitlements = Base Salary + BAH + BAS + OHA + Clothing + FSA + Special Pay.
-- Total Deductions = Federal + State + Social Security + Medicare + Insurance + Allotments/Debt.
-- Monthly Salary = Total Entitlements - Total Deductions. EOM = Monthly Salary - Mid Month Deposit already paid.
-- FICA wage caps, special-pay tax treatment, proration, combat exclusions, withholding schedules, BAH protection and partial housing allowances are outside this sample.
-- The screenshots remove earlier TSP and meal deductions, so demo net pay has changed. Default Alex: gross 6118.75; deductions 727.93; monthly net 5390.82; demo midmonth/EOM 2695.41. These remain fictional estimates, not actual LES amounts.
+**Save Excel** writes the file to `C:\Files\SoldierFinance.xlsx` and creates the folder if it doesn't exist. Close the workbook in Excel before saving again.
 
-## Excel, startup and Designer
-Save Excel creates C:\Files\SoldierFinance.xlsx with one real worksheet named Soldier Finance. There are 26 columns matching the four pictured tab fields, from A to Z. SSNs/names are text and financial amounts are numeric, including zero. No ClosedXML, JSON or installed Excel is required. Close the workbook before overwriting it.
+## Limitations
 
-Ten soldiers remain directly inside Main() in Program.cs. Restarting restores them; exported Excel is not read at startup. Runtime edits do not rewrite C# source.
+This is a learning project, not an official pay tool, and its results are estimates rather than real Leave and Earnings Statement (LES) amounts.
 
-Use Shift+F7 on either form's .cs file to open Design view. All layout is in its .Designer.cs file, with comments. The main viewer is 1400 x 900; the management form is 1100 x 720. Both tab containers allow scrolling. The updated PDF contains setup steps and complete source. The old video has not been regenerated and shows earlier fields/layouts.
+- Rates are cached 2026 tables and are not updated automatically.
+- Records live in memory. They reset when the app restarts, and the exported Excel file is not read back in.
+- The login uses one hard-coded demo account.
+- It doesn't handle officer or E-1/E-9 pay, FICA wage caps, combat-zone exclusions, proration or BAH protection.
 
-## Windows checks
-Source/event/property mappings and the 26-column export were inspected. This environment cannot compile or run WinForms, so Windows validation remains required. No executable is included.
+## Rate sources
 
-1. Verify exactly four tabs on both forms; viewer textboxes are read-only.
-2. Inspect all pictured fields in Design view; zero financial controls hide only at runtime.
-3. Add with separate first/middle/last names, Save, then search by each name; Cancel/X adds nothing.
-4. Update/cancel, duplicate ID and invalid grade/service preserve original records; save refreshes all fields.
-5. Test Delete No/Yes and removing the last soldier; Show all and Add still work.
-6. Add OHA/FSA and recalculate; check OHA replaces BAH and totals include both newly supported fields. Restore zero and check hidden controls.
-7. Verify FICA combines both taxes and Allotments/Debt is counted once.
-8. Export while searched: one worksheet, every current record, 26 aligned columns and zero cells.
-
-## Rate sources (checked October 11, 2026)
-DFAS basic pay: https://www.dfas.mil/MilitaryMembers/payentitlements/Pay-Tables/Basic-Pay/EM/
-DFAS BAS: https://www.dfas.mil/MilitaryMembers/payentitlements/Pay-Tables/bas/
-DFAS LES: https://www.dfas.mil/militarymembers/payentitlements/les/
-VA SGLI: https://www.benefits.va.gov/INSURANCE/sgli.asp
-IRS: https://www.irs.gov/publications/p15
-DTMO meals: https://www.travel.dod.mil/Travel-Transportation-Rates/Meal-Rates/
-DTMO housing policy: https://www.travel.dod.mil/Allowances/Basic-Allowance-for-Housing/
-Fort Riley official check: https://installations.militaryonesource.mil/in-depth-overview/fort-riley
-
-The official all-locality DTMO file could not be retrieved during earlier research. Station numeric rates were cross-checked in listings below, rather than claimed as a direct official import. Tables are cached, not automatically updated for later off-cycle changes.
-Fort Hood: https://uniformedpay.com/bah/2026/fort-hood-tx/
-Fort Bliss: https://uniformedpay.com/bah/2026/el-paso-tx/
-Fort Sam Houston: https://militarypaydates.com/bah-rates/tx/san-antonio-tx/
-Fort Riley: https://www.militarytoolkit.com/bah-rates/fort-riley
-Fort Carson: https://www.militarytoolkit.com/bah-rates/fort-carson
-Fort Campbell: https://www.militarytoolkit.com/bah-rates/fort-campbell
-Fort Jackson: https://www.militarytoolkit.com/bah-rates/fort-jackson
-Schofield: https://uniformedpay.com/bah/2026/honolulu-county-hi/
-
-
-
+- DFAS basic pay: https://www.dfas.mil/MilitaryMembers/payentitlements/Pay-Tables/Basic-Pay/EM/
+- DFAS BAS: https://www.dfas.mil/MilitaryMembers/payentitlements/Pay-Tables/bas/
+- DTMO BAH: https://www.travel.dod.mil/Allowances/Basic-Allowance-for-Housing/
